@@ -77,6 +77,9 @@ struct sprite_attr {
 /* low level sprite placement function */
 void put_sprite_attr(struct sprite_attr *src, uint8_t index) SDCCCALL0;
 
+/* search for plugged mouse and return its port: 1, 2 or 0xff if not found. */
+uint8_t search_mouse();
+
 /* structure for storing mouse data */
 struct mouse {
     int8_t dx;
