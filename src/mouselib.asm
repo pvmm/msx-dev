@@ -1,4 +1,4 @@
-; uint8_t search_mouse()
+; int8_t search_mouse()
 ; void read_mouse(struct mouse* mouse, uint8_t source) __sdcccall(0)
 
 .globl read_mouse
@@ -6,8 +6,8 @@
 REGWTP = 0xA0           ; register write port
 VALWTP = 0xA1           ; value write port
 VALRDP = 0xA2           ; value read port
-MOUSE1 = 0x1310
-MOUSE2 = 0x6c20
+PORT1 = 0x1310
+PORT2 = 0x6c20
 SHORT_WAIT = 10
 LONG_WAIT = 30
 LONGER_WAIT = 40
@@ -16,48 +16,42 @@ IO_REG2 = 15
 
 _search_mouse::
         di
-        ld de, #MOUSE1                  ; DE = 01310h for mouse in port 1 (D = 00010011b, E = 00010000b)
+        ld de, #PORT1                   ; DE = mouse in port 1
         ld b, #LONG_WAIT                ; first delay is the longest
-        call get_mouse_data0            ; read bits 7-4 of the x offset
-        and #0xf
+        call search_device0
+        cp a, #0xff
+        ld a, #1
+        ret nz                          ; device found, return mouse port 1
+        ld de, #PORT2                   ; DE = mouse in port 2
+        call search_device
+        cp a, #0xff
+        ret z                           ; return -1: device not found or joystick
+        ld a, #2
+        ret                             ; device found, return mouse port 2
+
+search_device:
+        ld b, #SHORT_WAIT
+search_device0:
+        call get_mouse_data0           ; read bits 7-4 of the x offset
+        or #0xc0                        ; clear bits b7/b6
+        ld c, a                         ; c <- byte1
+        call get_mouse_data            ; read bits 3-0 of the x offset
+        or #0xc0
+        ld b, a                         ; b <- byte2
+        ld a, c                         ; a <- byte1
         rlca
         rlca
         rlca
-        rlca                            ; adjust x offset's higher bits
-        ld c, a                         ; save temp data
-
-        call get_mouse_data             ; read bits 3-0 of the x offset
-        and #0xf
-        or c                            ; restore temp data
-
-        ld l, #1
-        cp #0xff
-        jr nz, done
-
-        ld de, #MOUSE2                  ; DE = 06C20h for mouse in port 2 (D = 01101100b, E = 00100000b)
-        ld b, #LONGER_WAIT              ; first delay is the longest
-        call get_mouse_data0            ; read bits 7-4 of the x offset
-        and #0xf
+        rlca                            ; a <- a << 4
+        or #0xf                         ; get high nibble
+        and b
+        ld d, a                         ; d <- (byte1 << 4 | 0x0f) & byte2
+        ld a, c                         ; a <- byte1
         rlca
         rlca
-        rlca
-        rlca                            ; adjust x offset's higher bits
-        ld c, a                         ; save temp data
-
-        call get_mouse_data             ; read bits 3-0 of the x offset
-        and #0xf
-        or c                            ; restore temp data
-
-        ld l, #2
-        cp #0xff
-        jr nz, done
-
-        ld l, #0xff
-done:
-        ld b, #LONGER_WAIT
-        call wait
-
-        ret
+        or #0x3f
+        and d                           ; a <- (byte1 << 2 | 0x3f) & (byte1 << 4 | 0x0f) & byte2
+        ret                             ; return device id fingerprint
 
 _read_mouse::
         push ix
@@ -68,10 +62,10 @@ _read_mouse::
         ld h, 3(ix)                     ; HL: struct mouse pointer
         ld a, 4(ix)                     ; A: source port
 
-        ld de, #MOUSE1                  ; DE = 01310h for mouse in port 1 (D = 00010011b, E = 00010000b)
+        ld de, #PORT1                   ; DE = 01310h for mouse in port 1 (D = 00010011b, E = 00010000b)
         and #2
         jr z, read_mouse
-        ld de, #MOUSE2                  ; DE = 06C20h for mouse in port 2 (D = 01101100b, E = 00100000b)
+        ld de, #PORT2                   ; DE = 06C20h for mouse in port 2 (D = 01101100b, E = 00100000b)
 
 read_mouse:
         di
