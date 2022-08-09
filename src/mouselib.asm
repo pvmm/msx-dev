@@ -23,20 +23,21 @@ _search_mouse::
         cp #0xff
         jp z, port2                     ; device not found? Searching on port 2
         or a                            ; mouse signature?
-        ld a, #1
+        ld l, #1
         ret z                           ; signature found, return "1" for mouse port 1
-        ld a, e
+        ld l, e
         ret                             ; return x offset
 port2:
         ld de, #PORT2                   ; DE = mouse on port 2
         call search_device
         cp #0xff
+        ld l, a
         ret z                           ; return -1: device not found or it's a joystick
         or a                            ; mouse signature?
-        ld a, #2
+        ld l, #2
         ret z                           ; signature found, return "2" for mouse port 2
-        xor a
-        ret                             ; ignore input
+        ld l, #0
+        ret                             ; ignore input (return "0")
 
 search_device:
         ld b, #SHORT_WAIT
@@ -64,6 +65,7 @@ search_device0:
         rlca
         or #0x3f
         and d                           ; a <- (byte1 << 2 | 0x3f) & (byte1 << 4 | 0x0f) & byte2
+        ld l, a
         ret                             ; return device id fingerprint
 
 _read_joyport::
