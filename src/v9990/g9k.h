@@ -45,7 +45,8 @@ void enable_fg_layer(void);
 void disable_fg_layer(void);
 void enable_bg_layer(void);
 void disable__bg_layer(void);
-
+void scroll_fg_x(uint16_t value);
+void scroll_bg_x(uint16_t value);
 
 // register functions
 void set_register(uint8_t reg, uint8_t bits);
@@ -55,6 +56,7 @@ void enable_register(uint8_t reg, uint8_t bits);
 void _disable_register(uint8_t reg, uint8_t bits);
 void enable_interrupts(void);
 void disable_interrupts(void);
+void enable_interrupt_line(uint16_t line);
 
 #define disable_register(reg, bits)         _disable_register(reg, (uint8_t) ((~(bits)) & 0xff))
 
@@ -91,5 +93,6 @@ void _put_pattern_a(uint16_t tile, uint16_t dst);
 
 #define put_pattern_b(tile, dst) do { _put_pattern_b((tile), (dst) << 1); } while(0)
 void _put_pattern_b(uint16_t tile, uint16_t dst);
+
 
 #endif // _G9K_H

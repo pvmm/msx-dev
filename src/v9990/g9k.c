@@ -126,7 +126,8 @@ void vpoke_next(uint8_t value)
 }
 
 
-void _put_pattern_a(uint16_t tile, uint16_t dst) {
+void _put_pattern_a(uint16_t tile, uint16_t dst)
+{
     port_p4 = G9K_WRI_MODE;
     // dst base address: 0x7C000-0x7DFFF (8191 bytes)
     port_p3 = dst & 0xff;
@@ -137,7 +138,8 @@ void _put_pattern_a(uint16_t tile, uint16_t dst) {
 }
 
 
-void _put_pattern_b(uint16_t tile, uint16_t dst) {
+void _put_pattern_b(uint16_t tile, uint16_t dst)
+{
     port_p4 = G9K_WRI_MODE;
     // dst base address: 0x7E000-0x7FFFF (8191 bytes)
     port_p3 = dst & 0xff;
@@ -145,4 +147,58 @@ void _put_pattern_b(uint16_t tile, uint16_t dst) {
     port_p3 = 0x07; // AII (address increment inhibit): advance to next address
     port_p0 = tile & 0xff;
     port_p0 = tile >> 8;
+}
+
+
+inline void enable_interrupts(void)
+{
+    set_register(9, 3);
+}
+
+
+inline void disable_interrupts(void)
+{
+    set_register(9, 0);
+}
+
+
+// hook on H_KEYI
+extern void vblank_hook(void);
+
+
+void enable_vblank_hook(void)
+{
+    set_interrupt_handler((uint8_t(*)(void)) vblank_hook);
+    init_interrupt_handler();
+}
+
+
+void disable_vblank_hook(void)
+{
+    end_interrupt_handler();
+}
+
+
+inline void enable_interrupt_line(uint16_t line)
+{
+    di;
+    enable_register(10, line & 0xff);
+    enable_register(11, 0x80 | (line >> 8)); // enable IEHM (7th bit)
+    ei;
+}
+
+
+void scroll_fg_x(uint16_t value)
+{
+    set_register(19, value & 0x7);                       // SCAX (bits 0-2)
+    set_next_register(value >> 3);                       // SCAX (buts 10-3)
+}
+
+
+void scroll_bg_x(uint16_t value)
+{
+    di;
+    set_register(23, value & 0x7);                       // SCBX (bits 0-2)
+    set_next_register(value >> 3);                       // SCBX (buts 10-3)
+    ei;
 }
