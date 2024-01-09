@@ -1,45 +1,408 @@
+#include "fusion-c/header/msx_fusion.h"
+
+//#include "bios.h"
+#include "errors.h"
+#include "g9k.h"
+#include "v99xx.h"
+#include "vdp-commands.h"
+#include "macros.h"
+#include "mem.h"
+#include "io.h"
+#include "buffer.h"
+#include "debug.h"
+#include "sprites.h"
+
 #include <stdint.h>
 #include <string.h>
 
-#include "v99xx.h"
-#include "g9k.h"
-#include "fusion-c.h"
+
+uint8_t palette[] = {
+    0x0, 0x0, /* buggy SDCC */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0a, 0x1d, 0x00, 0x1f, 0x13, 0x1f, 0x00, 0x00, 0x1e,
+    0x1f, 0x00, 0x1f, 0x12, 0x00, 0x19, 0x00, 0x19, 0x00, 0x1f, 0x1e, 0x11, 0x00, 0x1f, 0x03, 0x03,
+    0x03, 0x07, 0x07, 0x07, 0x0b, 0x0b, 0x0b, 0x0f, 0x0f, 0x0f, 0x13, 0x13, 0x13, 0x1f, 0x1f, 0x1f,
+};
 
 
-int init_video()
+uint8_t tile_0[] = {
+    0x0, 0x0, /* buggy SDCC */
+    0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0, 0xf0,
+};
+
+
+uint8_t tile_a_even[] = {
+    0x0, 0x0, /* buggy SDCC */
+    0x00, 0x00, 0x22, 0x22, 0x33, 0x33, 0x66, 0x66,
+    0x00, 0x00, 0x21, 0x11, 0x31, 0x11, 0x61, 0x11,
+    0x00, 0x00, 0x21, 0x21, 0x31, 0x31, 0x61, 0x61,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x21, 0x22, 0x31, 0x33, 0x61, 0x66,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x11,
+};
+uint8_t tile_a_odd[] = {
+    0x0, 0x0, /* buggy SDCC */
+    0x00, 0x00, 0x22, 0x22, 0x33, 0x33, 0x66, 0x66,
+    0x00, 0x00, 0x11, 0x12, 0x11, 0x13, 0x11, 0x16,
+    0x00, 0x00, 0x12, 0x12, 0x13, 0x13, 0x16, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x22, 0x12, 0x33, 0x13, 0x66, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x61, 0x16,
+    0x00, 0x00, 0x21, 0x12, 0x31, 0x13, 0x11, 0x16,
+};
+
+
+uint8_t tile_b[] = {
+    0x0, 0x0, /* buggy SDCC */
+    0x11, 0x11, 0x11, 0x11, 0x44, 0x44, 0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x66, 0x66, 0x66, 0x66,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x11, 0x11, 0x14, 0x51, 0x11, 0x11, 0x15, 0x61, 0x11, 0x11, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x44, 0x41, 0x14, 0x51, 0x55, 0x51, 0x15, 0x61, 0x66, 0x61, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x41, 0x14, 0x14, 0x51, 0x51, 0x15, 0x15, 0x61, 0x61, 0x16, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x44, 0x41, 0x14, 0x51, 0x55, 0x51, 0x15, 0x61, 0x66, 0x61, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x41, 0x14, 0x14, 0x51, 0x51, 0x15, 0x15, 0x61, 0x61, 0x16, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x44, 0x41, 0x14, 0x51, 0x55, 0x51, 0x15, 0x61, 0x66, 0x61, 0x16,
+    0x11, 0x11, 0x11, 0x11, 0x41, 0x11, 0x11, 0x14, 0x51, 0x11, 0x11, 0x15, 0x61, 0x11, 0x11, 0x16,
+};
+
+
+#define SOURCE_KEYB      0
+#define SOURCE_JOY1      1
+#define SOURCE_JOY2      2
+#define SOURCE_INVALID   3
+
+// input mappings
+#define IGNORED          0
+#define FIRE1            16
+
+static SPRITE_ATTR sprites[MAX_SPRITES];
+
+
+void write_tile_x0(void)
 {
-	// V9990 VDP initialization
-	if (init_g9k() != OK) {
-		return INITG9_ERROR;
-	}
+    uint32_t pos = 0x00000;
+    uint16_t row = sizeof(tile_0) / 8;
 
-	// using superimpose if Video9000
-	set_ctrl_port(SUPERIMPOSE_TRANSPARENT);
-
-	// init sprite pattern table at 0x10000
-	init_sprite_pattern(4);
-	init_pattern_mode();
-
-	if (load_assets() != OK) {
-		return LOADASSETS_ERROR;
-	}
+    for (uint8_t i = 0; i < sizeof(tile_0); i += row) {
+        vpoke(pos, tile_0[i]);
+        for (uint8_t j = i + 1; j < i + row; j++) {
+            vpoke_next(tile_0[j]);
+        }
+        pos += 0x80;
+    }
 }
 
 
-int main()
+void write_even_tile_a(void)
 {
-	disable_click();
+    uint32_t pos = 0x400;
+    uint16_t row = sizeof(tile_a_even) / 8;
 
-	if (init_platform() < 0) {
-		return -1;
-	}
+    vpoke(pos, tile_a_even[0]);
+    for (uint8_t i = 1; i < sizeof(tile_a_even); i++) {
+        vpoke_next(tile_a_even[i]);
+    }
+}
 
-	enable_vblank_hook();
-	wait_vsync();
 
-	while (true) {
-		idle_update();
-	}
+void write_odd_tile_a(void)
+{
+    uint32_t pos = 0x40400;
+    uint16_t row = sizeof(tile_a_odd) / 8;
 
-	return 0;
+    vpoke(pos, tile_a_odd[0]);
+    for (uint8_t i = 1; i < sizeof(tile_a_odd); i++) {
+        vpoke_next(tile_a_odd[i]);
+    }
+}
+
+
+void write_tile_b(void)
+{
+    uint32_t pos = 0x40000;
+    uint16_t row = sizeof(tile_b) / 8;
+
+    for (uint8_t i = 0; i < sizeof(tile_b); i += row) {
+        vpoke(pos, tile_b[i]);
+        for (uint8_t j = i + 1; j < i + row; j++) {
+            vpoke_next(tile_b[j]);
+        }
+        pos += 0x80;
+    }
+}
+
+
+inline void wipe_all_sprites(void)
+{
+    copy_ram_to_vram2(sprites, sizeof(SPRITE_ATTR) * 125, 0x3fe00);        // sprite attribute table: 0x3fe00
+}
+
+
+inline void update_sprites(void)
+{
+    copy_ram_to_vram2(sprites, sizeof(SPRITE_ATTR) * 3, 0x3fe00);        // sprite attribute table: 0x3fe00
+}
+
+
+void init_sprites(void)
+{
+    // hide all sprites
+    for (int8_t i = 0; i < MAX_SPRITES; ++i)
+    {
+        sprites[i].attr = SPRITE_DISABLE_BIT;
+    }
+    print("Wipe sprite memory...\r\n");
+    wipe_all_sprites();
+    print("Done.\r\n");
+}
+
+
+void prepare_assets(void)
+{
+    // load palette into V9990
+    write_palette(palette, 0, 48);
+
+    // write tiles to layer and layer b
+    write_tile_x0();
+    write_even_tile_a();
+    write_odd_tile_a();
+    // overwrite x0
+    bmxl_a(0x800, 0, 0, 32, 8);
+    wait_g9k_command();
+
+    write_tile_b();
+}
+
+
+uint8_t init_platform(void)
+{
+    // V9990 VDP initialization
+    if (init_g9k() != 0) {
+        return 1;
+    }
+
+    // using superimpose if Video9000
+    set_ctrl_port(SUPERIMPOSE_TRANSPARENT);
+
+    init_sprites();
+
+    // init sprite pattern table at 0x10000
+    init_sprite_pattern(4);
+    init_pattern_mode();
+
+    // true  : NTSC (60hz)
+    // false : PAL (50hz)
+    set_p1_mode(true);
+
+    prepare_assets();
+
+    // wait a little while
+    print("Starting Video9000 mode...\r\n");
+    busy_wait(0x40000);
+
+    // using Video9000 mode
+    set_ctrl_port(SUPERIMPOSE_OFF);
+
+    return 0;
+}
+
+
+void shutdown_platform(void)
+{
+    shutdown_g9k();
+}
+
+
+void write_pnt(uint32_t vram)
+{
+    // first row
+    vpoke(vram, 0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    vpoke_next (0x01);
+    // second row
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    vpoke_next(0x02);
+    // leaking area
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+    vpoke_next(0x03);
+
+    // first row
+    vpoke(vram + 0x40000, 0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    // second row
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    // leaking area
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+    vpoke_next(0x00);
+}
+
+
+enum state {
+    STATE_PLAYING = 0,
+    STATE_QUIT,
+};
+
+
+uint8_t read_input(uint8_t source)
+{
+    if (source != SOURCE_INVALID) {
+        return JoystickRead(source) | (TriggerRead(source) ? FIRE1 : 0);
+    }
+
+    return IGNORED;
+}
+
+
+inline void write_pnt_a(uint32_t address, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+    bmxl_b(address << 1, 512 + (x << 2), 1920 + y, width << 2, height);
+}
+
+
+inline void write_pnt_b(uint32_t address, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+    bmxl_b(address << 1, 512 + (x << 2), 1984 + y, width << 2, height);
+}
+
+
+int main(void)
+{
+    print("bmxl-tester\r\n");
+    print("(C) 2023 Pedro de Medeiros <pedro.medeiros@gmail.com>\r\n");
+    busy_wait(0x20000);
+
+    if (init_platform() != 0) {
+        return 1;
+    }
+
+    fill_screen(0);
+    enable_display();
+    scroll_fg_x(0);
+    scroll_fg_y(0);
+
+    // set palettes A=0, B=0
+    set_banks_palettes(0, 0);
+
+    // put layer A on top of layer B
+    set_banks_priorities(0, 0);
+
+    // PNT in PGT area
+    write_pnt(0x30400); // and 0x70400
+
+    // set border to blue
+    set_bd_color(0x2);
+
+    // overwrite 9x2 tiles in PNT(A)
+    write_pnt_a(0x30400, 0, 0, 9, 2);
+    wait_g9k_command();
+    busy_wait(0x30000);
+
+    //debug_break();
+
+    // set border to green
+    set_bd_color(0x3);
+
+    // overwrite 9x2 tiles in PNT(B)
+    write_pnt_b(0x30400, 1, 2, 9, 2);
+    wait_g9k_command();
+    busy_wait(0x30000);
+
+    // set border to red
+    set_bd_color(0x4);
+
+    // Columns in PNT(A)
+    //bmxl_b(0x60800, 512 + 30*4, 1920 + 0, 4*2, 9);
+    write_pnt_a(0x30400, 30, 0, 2, 9);
+    wait_g9k_command();
+    busy_wait(0x30000);
+
+    // set border to yellow
+    set_bd_color(0x5);
+
+    // Columns in PNT(B)
+    write_pnt_b(0x30400, 26, 1, 2, 9);
+    wait_g9k_command();
+
+    uint8_t state = STATE_PLAYING;
+    while (state != STATE_QUIT) {
+        uint8_t input = read_input(SOURCE_KEYB);
+
+        if (input & FIRE1) {
+            state = STATE_QUIT;
+        }
+        wait_vsync();
+    }
+
+    set_ctrl_port(SUPERIMPOSE_TRANSPARENT);
+    shutdown_platform();
+
+    return OK;
 }
