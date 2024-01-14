@@ -1,20 +1,52 @@
 ; Author: Marcos Daniel Blanco de Oliveira
 ; Date: March, 01 of 2023
 ; Email: mdblanco.br@gmail.com
+; 
+; Your problems as an assembly developer are over. Now we have this super
+; library to show files and directories in assembly, and it´s super easy
+; to use. 
+;
+; Just load 3 registers with values and call a procedure and you're done.
+; A beautiful and intuitive visual interface to view the files is shown.
+; And in the end when choosing a file, a register is returned with the
+; address of the chosen file name.
+;
+; No proof of income or anything is required. All at the tip of your fingers.
+; Just click on the link below and download the library. And the best part,
+; it´s totally free and works with DOS1, DOS2 and Nextor.
+;
+; Don't waste more time and create your first assembly program using this
+; amazing library. The first 100 clicks on the link receive an autographed
+; copy of the amazing DSKPro Light 2.1.
+;
+; NOTE: Remember that this library is used in DSKPro.
+; Special thanks to my friend Wouter Vermaelen for some technical help in
+; the beginning of the development of this library.
+;
+; Link to Download the compiled file: (files.com)
+; https://1drv.ms/u/s!AlpEtfGjLbhmhvlhu2iPZ4qf1pdSVg?e=sOGfSI
+;
+; Link to download the assembly file Source: (files.asm)
+; https://1drv.ms/u/s!AlpEtfGjLbhmhvliqxjJBLlL9cEHZw?e=QxZMhb
+;
+; And to compile the file on the PC even quickly, just use MSxpen at the
+; link below: 
+; https://msxpen.com/codes/-NPTRRIaD6rye-eD6lTX
 
-bdos		equ 0xF37D
+
+bdos        equ 0xF37D
 initxt      equ 0x006C
 
 ; the address of our program
             ; org 0x8050 -0X0E
-             org 0x100
-			
-start:		
+            org 0x100
+
+start:
             ; ld hl,mainrot - start + 100h
-			; ld de,8050H
-			; ld bc,endprogram - mainrot + 10
-			; ldir
-			; jp 8050H	
+            ; ld de,8050H
+            ; ld bc,endprogram - mainrot + 10
+            ; ldir
+            ; jp 8050H
 
 ; --------------------- begin | get files Main Procedure Call
 mainrot:    ld a,'A' ; Set Initial Drive as "A:\"
@@ -23,40 +55,40 @@ mainrot:    ld a,'A' ; Set Initial Drive as "A:\"
             ld de,0x1F00 ; Set the Maximum Amount of Bytes
             call files ; Call Main Procedure - It Returns Register [HL] that points to the Name of the Selected File
             ret ; Return to DOS
-PathEXT:	db '*',0,0,0 ; Set the Files Extension. Instead of '*', use 'DSK' to filter DSK files.
+PathEXT:    db '*',0,0,0 ; Set the Files Extension. Instead of '*', use 'DSK' to filter DSK files.
 ; --------------------- end | get files Main Procedure Call
 
 ; --------------------- begin | get files Main Procedure
 files:      ld (PathNameft),a
-			ld (PathName),a
-			ld (PathFCB2),a
+            ld (PathName),a
+            ld (PathFCB2),a
             ld (buf_data),hl
             ld (max_buf_size),de
             ld a,b
             ld (dirtype),a          
             ld a,40
-			ld (0f3aeh),a
+            ld (0f3aeh),a
             call biosrots
             call getdosver
-			call initpath
+            call initpath
             ld hl,stopmsg
             ld (0f250h),hl
             ld a,0c3h
             ld (0f24fh),a 
             call setdirext
-			ld hl,stopmsg
+            ld hl,stopmsg
             ld (0f250h),hl
             ld a,0c3h
             ld (0f24fh),a 
-			call dirrot
-			call setpath
+            call dirrot
+            call setpath
             call 0e605h
-			call 0e600h
+            call 0e600h
             ld hl,buflaststr
             ld a,(dftdrive)
             ld b,a
             ld a,(dirtype)
-			ret
+            ret
 
 biosrots:   ld hl,scr0rot
             ld de,0e600h
@@ -73,7 +105,7 @@ biosrots:   ld hl,scr0rot
             db 0,56h,1,0c9h
 
 dirrot:     call makescr
-			call printheader
+            call printheader
             xor a
             ld (pathlevel),a
 
@@ -95,9 +127,9 @@ dirstart:   ld hl,0
             call cleardirbuf
             call xsetp0ram
             ld a,(dirtype)
-			and a
-			jr nz,stdtload
-			call createpath        
+            and a
+            jr nz,stdtload
+            call createpath        
  stdtload:  ld a,(dosversion)
             cp 2
             jr z,stdos2pul
@@ -117,39 +149,39 @@ stdosquit:  ret
 ; --------------------- end | get files Main Procedure
 
 ; --------------------- begin | procedure to read keyboard
-getkey:		di
-			in a,(0aah)
-			and 0f0h
-			or 7
-			out(0aah),a
-			in a,(0a9h)
-			bit 2,a
-			jr z,gkeyesclp
+getkey:     di
+            in a,(0aah)
+            and 0f0h
+            or 7
+            out(0aah),a
+            in a,(0a9h)
+            bit 2,a
+            jr z,gkeyesclp
             bit 7,a
             jr z,gkeyretlp
-			jr gkeyarrows
-gkeyesclp:	in a,(0aah)
-			and 0f0h
-			or 7
-			out(0aah),a
-			in a,(0a9h)
-			bit 2,a
-			jr z,gkeyesclp
-			ld a,27 ; Esc Key Code
+            jr gkeyarrows
+gkeyesclp:  in a,(0aah)
+            and 0f0h
+            or 7
+            out(0aah),a
+            in a,(0a9h)
+            bit 2,a
+            jr z,gkeyesclp
+            ld a,27 ; Esc Key Code
             ret
 gkeyretlp:  in a,(0aah)
-			and 0f0h
-			or 7
-			out(0aah),a
-			in a,(0a9h)
-			bit 7,a
-			jr z,gkeyretlp
-			ld a,13 ; Enter Key Code
+            and 0f0h
+            or 7
+            out(0aah),a
+            in a,(0a9h)
+            bit 7,a
+            jr z,gkeyretlp
+            ld a,13 ; Enter Key Code
             ret
 gkeyarrows: in a,(0aah)
-			and 0f0h
-			or 8
-			out(0aah),a
+            and 0f0h
+            or 8
+            out(0aah),a
             in a,(0a9h)
             bit 7,a
             jr z,gkeyarht
@@ -161,40 +193,40 @@ gkeyarrows: in a,(0aah)
             jr z,gkeyaleft
             jp getkey
  gkeyarht:  in a,(0aah)
-			and 0f0h
-			or 8
-			out(0aah),a
-			in a,(0a9h)
-			bit 7,a
-			jr z,gkeyarht
-			ld a,28 ; Right Key Code
+            and 0f0h
+            or 8
+            out(0aah),a
+            in a,(0a9h)
+            bit 7,a
+            jr z,gkeyarht
+            ld a,28 ; Right Key Code
             ret   
  gkeyadown: in a,(0aah)
-			and 0f0h
-			or 8
-			out(0aah),a
-			in a,(0a9h)
-			bit 6,a
-			jr z,gkeyadown
-			ld a,31 ; Down Key Code
+            and 0f0h
+            or 8
+            out(0aah),a
+            in a,(0a9h)
+            bit 6,a
+            jr z,gkeyadown
+            ld a,31 ; Down Key Code
             ret 
  gkeyaup:   in a,(0aah)
-			and 0f0h
-			or 8
-			out(0aah),a
-			in a,(0a9h)
-			bit 5,a
-			jr z,gkeyaup
-			ld a,30 ; Up Key Code
+            and 0f0h
+            or 8
+            out(0aah),a
+            in a,(0a9h)
+            bit 5,a
+            jr z,gkeyaup
+            ld a,30 ; Up Key Code
             ret 
  gkeyaleft: in a,(0aah)
-			and 0f0h
-			or 8
-			out(0aah),a
-			in a,(0a9h)
-			bit 4,a
-			jr z,gkeyaleft
-			ld a,29 ; Left Key Code
+            and 0f0h
+            or 8
+            out(0aah),a
+            in a,(0a9h)
+            bit 4,a
+            jr z,gkeyaleft
+            ld a,29 ; Left Key Code
             ret    
 ; --------------------- end | procedure to read keyboard
 
@@ -211,25 +243,25 @@ setdeall:   ld hl,streall
             jr setdeback
 ; --------------------- end | procedure to set Files Extension
 
-; --------------------- begin | procedure to set Initial Path	
-initpath:	ld hl,PathNameft + 1
-			ld de,PathName + 1
-			ld bc,6
-			ldir
-			call setpath
-			ret
-; --------------------- end | procedure to set Initial Path	
+; --------------------- begin | procedure to set Initial Path
+initpath:   ld hl,PathNameft + 1
+            ld de,PathName + 1
+            ld bc,6
+            ldir
+            call setpath
+            ret
+; --------------------- end | procedure to set Initial Path
 
-; --------------------- begin | procedure to load Directories	
+; --------------------- begin | procedure to load Directories
 getdir:     ld c,40h        ; Find first entry (_FFIRST)
-            ld b,16          ; no special attributes    (or use ld bc,#0040)
+            ld b,16         ; no special attributes    (or use ld bc,#0040)
             ld de,PathName  ; pointer to pathname string, zero-terminated
             ld ix,ResultFIB ; pointer to a buffer where the result will be written
-            call bdos      ; call BDOS
-            cp 0d7h          ; 0xD7 = .NOFIL = File not found
+            call bdos       ; call BDOS
+            cp 0d7h         ; 0xD7 = .NOFIL = File not found
             ret z
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             ld a,(ix + 14)
             bit 4,a
             jr z,getdloop
@@ -239,13 +271,13 @@ getdir:     ld c,40h        ; Find first entry (_FFIRST)
             call inctotfl
             call getfgname
             call makedir
-getdloop:   ld c,41h       ; Find next entry (_FNEXT)
+getdloop:   ld c,41h        ; Find next entry (_FNEXT)
             ld ix,ResultFIB ; Must be the same buffer used in FFIRST
-            call bdos      ; call BDOS
+            call bdos       ; call BDOS
             cp 0d7h
             ret z
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             ld a,(ix + 14)
             bit 4,a
             jr z,getdloop
@@ -262,37 +294,37 @@ driverror:  call clearload
 drverrloop: call getkey
             pop hl
             jp dirrot
-; --------------------- end | procedure to load Directories	
+; --------------------- end | procedure to load Directories
 
-; --------------------- begin | procedure to load Files	
+; --------------------- begin | procedure to load Files
 getfiles:   ld a,(dosversion)
             cp 1
             jp z,getfiles1
-			ld hl,PathName
-			ld de,PathSet
-			ld bc,64
-			ldir
-			call gffixpath
-			ld a,(PathName)
-			ld (dftdrive),a
+            ld hl,PathName
+            ld de,PathSet
+            ld bc,64
+            ldir
+            call gffixpath
+            ld a,(PathName)
+            ld (dftdrive),a
             ld c,40h        ; Find first entry (_FFIRST)
             ld b,0          ; no special attributes    (or use ld bc,#0040)
-            ld de,PathSet  ; pointer to pathname string, zero-terminated
+            ld de,PathSet   ; pointer to pathname string, zero-terminated
             ld ix,ResultFIB ; pointer to a buffer where the result will be written
-            call bdos      ; call BDOS
-            cp 0d7h          ; 0xD7 = .NOFIL = File not found
+            call bdos       ; call BDOS
+            cp 0d7h         ; 0xD7 = .NOFIL = File not found
             ret z
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             call inctotfl
             call getfgname
-getfloop:  ld c,41h       ; Find next entry (_FNEXT)
+getfloop:   ld c,41h         ; Find next entry (_FNEXT)
             ld ix,ResultFIB ; Must be the same buffer used in FFIRST
-            call bdos      ; call BDOS
+            call bdos       ; call BDOS
             cp 0d7h
             ret z
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             call inctotfl
             call getfgname
             ld hl,(bufdir)
@@ -317,17 +349,17 @@ getfgname:  push ix
             ld (bufdir),de
             ret
 
-gffixpath:	ld de,PathSet
-gffixloop:	ld a,(de)
-			cp '.'
-			jr z,gffppo
-			inc de
-			jr gffixloop
-gffppo:		inc de
-			ld hl,PathEXT
-			ld bc,4
-			ldir
-			ret
+gffixpath:  ld de,PathSet
+gffixloop:  ld a,(de)
+            cp '.'
+            jr z,gffppo
+            inc de
+            jr gffixloop
+gffppo:     inc de
+            ld hl,PathEXT
+            ld bc,4
+            ldir
+            ret
 
 getfiles1:  ld a,(PathFCB2)
             sub 40h
@@ -335,19 +367,19 @@ getfiles1:  ld a,(PathFCB2)
             call setdma
             ld c,11h        ; Find first entry (_FFIRST)
             ld de,fcbbytes  
-            call bdos      ; call BDOS
-            cp 0ffh          ; 0xD7 = .NOFIL = File not found
+            call bdos       ; call BDOS
+            cp 0ffh         ; 0xD7 = .NOFIL = File not found
             jr z,closefile
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             call inctotfl
             call getf1gname
-getf1loop:  ld c,12h       ; Find next entry (_FNEXT)
-            call bdos      ; call BDOS
+getf1loop:  ld c,12h        ; Find next entry (_FNEXT)
+            call bdos       ; call BDOS
             cp 0ffh
             jr z,closefile
             or a
-            jP nz,driverror    ; some other error
+            jP nz,driverror ; some other error
             call inctotfl
             call getf1gname
             jr getf1loop
@@ -388,9 +420,9 @@ closefile:  ld c,10h
             ld de,fcbbytes
             call bdos
             ret
-; --------------------- end | procedure to load Files	
+; --------------------- end | procedure to load Files
 
-; --------------------- begin | procedure to insert the Sub-Directories	
+; --------------------- begin | procedure to insert the Sub-Directories
 makedir:    ld hl,(bufdir)
             ld de,13
             xor a
@@ -415,7 +447,7 @@ mdirpul:    ld hl,(bufdir)
             ld bc,3
             ldir
             ret
-; --------------------- end | procedure to insert the Sub-Directories	
+; --------------------- end | procedure to insert the Sub-Directories
 
 ; --------------------- begin | procedure to get the Current Path
 getpath:    ld c,59h        
@@ -506,9 +538,9 @@ clearfib:   ld hl,ResultFIB
 
 ; --------------------- begin | procedure to clear the Headers´s Area
 cleartxtph: ld hl,1
-			ld bc,38
-			ld a,17h
-			call r_filvrm
+            ld bc,38
+            ld a,17h
+            call r_filvrm
             ret
 ; --------------------- end | procedure to clear the Headers´s Area
 
@@ -557,29 +589,29 @@ cngdrvdos1: ld de,PathFCB2
 ; --------------------- end | procedure to change the Drive
 
 ; --------------------- begin | procedure to Set Target Path
-settgpath:	ld a,(dirtype)
-			and a
-			ret nz
-			ld ix,buflaststr
-			ld a,(ix)
-			cp 'S'
-			ret nz
-			ld a,(ix + 9)
-			cp 'C'
-			ret nz
-			ld a,(ix + 10)
-			cp 'M'
-			ret nz
-			ld a,(ix + 11)
-			cp 'D'
-			ret nz
-			call setpath
-			ld hl,PathSet
-			ld de,PathtgSet
-			ld bc,64
-			ldir
-			pop hl
-			ret
+settgpath:  ld a,(dirtype)
+            and a
+            ret nz
+            ld ix,buflaststr
+            ld a,(ix)
+            cp 'S'
+            ret nz
+            ld a,(ix + 9)
+            cp 'C'
+            ret nz
+            ld a,(ix + 10)
+            cp 'M'
+            ret nz
+            ld a,(ix + 11)
+            cp 'D'
+            ret nz
+            call setpath
+            ld hl,PathSet
+            ld de,PathtgSet
+            ld bc,64
+            ldir
+            pop hl
+            ret
 ; --------------------- end | procedure to Set Target Path
 
 ; --------------------- begin | procedure to enter into a Subdirectory
@@ -866,7 +898,7 @@ pntfilloop: ld hl,(bufdir)
             ld e,a
             add hl,de
             ld de,(bufdir)
-			call printh
+            call printh
 
             ld hl,(bufdir)
             ld de,13
@@ -900,14 +932,14 @@ pfnploop:   call getkey
             ret z
             cp 13
             jr z,pfnpenter
-			cp 30
-			jp z,pfnpup
-			cp 31
-			jp z,pfnpdown
-			cp 29
-			jp z,pfnpleft
-			cp 28
-			jp z,pfnpright
+            cp 30
+            jp z,pfnpup
+            cp 31
+            jp z,pfnpdown
+            cp 29
+            jp z,pfnpleft
+            cp 28
+            jp z,pfnpright
             jr pfnploop
 pfnpenter:  call settgpath
             call changedrv
@@ -1040,225 +1072,224 @@ inctotpag:  ld a,(totpages)
 ; --------------------- end | procedure to increment the number of Pages
 
 ; --------------------- begin | procedure to set up page 0 (a=0 > rom, a=1 > ram, a=2 > interface)
-xsetp0ram:	ld a,1
-			jp setpage0
+xsetp0ram:  ld a,1
+            jp setpage0
 
-xsetp0rom:	push ix
-			push iy
-			push hl
-			push de
-			push bc
-			push af
-			xor a
-			call setpage0	
-			; ei
-			pop af
-			pop bc
-			pop de
-			pop hl
-			pop iy
-			pop ix
-			ret	
+xsetp0rom:  push ix
+            push iy
+            push hl
+            push de
+            push bc
+            push af
+            xor a
+            call setpage0
+            ; ei
+            pop af
+            pop bc
+            pop de
+            pop hl
+            pop iy
+            pop ix
+            ret
 
-setpage0:	di
-			push hl
-			push de
-			push bc
-			and a
-			jr z,sp0rom
-			cp 1
-			jr z,sp0ram
-			ld a,(0f348h)
-			jr sp0cont
-sp0ram:		ld a,(0f341h)
-			jr sp0cont
-sp0rom:		ld a,(0fcc1h)		
-sp0cont:	ld b,a
-			and 3
-			ld c,a
-			rrca
-			rrca
-			or c
-			ld c,a
-			in a,(0a8h)
-			ld h,a
-			and 00111100b
-			or c
-			out(0a8h),a
-			ld a,b
-			rrca
-			rrca
-			and 3
-			ld b,a
-			ld a,(0ffffh)
-			cpl
-			and 11111100b
-			or b
-			ld (0ffffh),a
-			ld a,h
-			and 11111100b
-			ld b,a
-			ld a,c
-			and 3
-			or b
-			out(0a8h),a
-			pop bc
-			pop de
-			pop hl
-			ret
+setpage0:   di
+            push hl
+            push de
+            push bc
+            and a
+            jr z,sp0rom
+            cp 1
+            jr z,sp0ram
+            ld a,(0f348h)
+            jr sp0cont
+sp0ram:     ld a,(0f341h)
+            jr sp0cont
+sp0rom:     ld a,(0fcc1h)
+sp0cont:    ld b,a
+            and 3
+            ld c,a
+            rrca
+            rrca
+            or c
+            ld c,a
+            in a,(0a8h)
+            ld h,a
+            and 00111100b
+            or c
+            out(0a8h),a
+            ld a,b
+            rrca
+            rrca
+            and 3
+            ld b,a
+            ld a,(0ffffh)
+            cpl
+            and 11111100b
+            or b
+            ld (0ffffh),a
+            ld a,h
+            and 11111100b
+            ld b,a
+            ld a,c
+            and 3
+            or b
+            out(0a8h),a
+            pop bc
+            pop de
+            pop hl
+            ret
 ; --------------------- end | procedure to set up page 0 (a=0 > rom, a=1 > ram)
 
 ; --------------------- begin | procedure to read string from vram (same as 0059h)
-rvram:		di
-			ld a,l
-			out (099h),a
-			ld a,h
-			and 3fh
-			out (099h),a
-			ex (sp),hl
-			ex (sp),hl
-rvrl:		in a,(098h)
-			ld (de),a
-			inc de
-			dec bc
-			ld a,c
-			or b
-			jr nz,rvrl
-			ret
-; --------------------- end | procedure to read string from vram (same as 0059h)			
-	
-; --------------------- begin | procedure to write string in vram (same as 005ch)	
-wvram:		di
-			ld a,e
-			out (099h),a
-			ld a,d
-			and 3fh
-			or 40h
-			out (099h),a
-			ex (sp),hl
-			ex (sp),hl
-wvrl:		ld a,(hl)
-			out (098h),a
-			dec bc
-			inc hl
-			ld a,c
-			or b
-			jr nz,wvrl
-			ret
-; --------------------- end | procedure to write string in vram (same as 005ch)	
+rvram:      di
+            ld a,l
+            out (099h),a
+            ld a,h
+            and 3fh
+            out (099h),a
+            ex (sp),hl
+            ex (sp),hl
+rvrl:       in a,(098h)
+            ld (de),a
+            inc de
+            dec bc
+            ld a,c
+            or b
+            jr nz,rvrl
+            ret
+; --------------------- end | procedure to read string from vram (same as 0059h)            
+; --------------------- begin | procedure to write string in vram (same as 005ch)
+wvram:      di
+            ld a,e
+            out (099h),a
+            ld a,d
+            and 3fh
+            or 40h
+            out (099h),a
+            ex (sp),hl
+            ex (sp),hl
+wvrl:       ld a,(hl)
+            out (098h),a
+            dec bc
+            inc hl
+            ld a,c
+            or b
+            jr nz,wvrl
+            ret
+; --------------------- end | procedure to write string in vram (same as 005ch)
 
-; --------------------- begin | procedure to print a string		
-printh:		ld (phelph),hl
-phloop:		ld a,(de)
-			cp 13
-			jr z,printhz
-			and a
-			ret z
-			call wvbyte
-			inc hl
-			inc de
-			jr phloop
-printhz:	inc de
-			push de
-			ld hl,(phelph)
-			ld de,40
-			add hl,de
-			ld (phelph),hl
-			pop de
-			jr phloop
-; --------------------- end | procedure to print a string	
+; --------------------- begin | procedure to print a string
+printh:     ld (phelph),hl
+phloop:     ld a,(de)
+            cp 13
+            jr z,printhz
+            and a
+            ret z
+            call wvbyte
+            inc hl
+            inc de
+            jr phloop
+printhz:    inc de
+            push de
+            ld hl,(phelph)
+            ld de,40
+            add hl,de
+            ld (phelph),hl
+            pop de
+            jr phloop
+; --------------------- end | procedure to print a string
 
-; --------------------- begin | procedure to write byte in vram	
-wvbyte:		di
-			push hl
-			push de
-			push bc
-			push af
-			ld a,l
-			out (099h),a
-			ld a,h
-			and 3fh
-			or 40h
-			out (099h),a
-			ex (sp),hl
-			ex (sp),hl
-			pop af
-			out (098h),a
-			pop bc
-			pop de
-			pop hl
-			ret
-; --------------------- end | procedure to write byte in vram	
+; --------------------- begin | procedure to write byte in vram
+wvbyte:     di
+            push hl
+            push de
+            push bc
+            push af
+            ld a,l
+            out (099h),a
+            ld a,h
+            and 3fh
+            or 40h
+            out (099h),a
+            ex (sp),hl
+            ex (sp),hl
+            pop af
+            out (098h),a
+            pop bc
+            pop de
+            pop hl
+            ret
+; --------------------- end | procedure to write byte in vram
 
-; --------------------- begin | procedure to read byte in vram	
-rvbyte:		di
-			push hl
-			push de
-			push bc
-			ld a,l
-			out (099h),a
-			ld a,h
-			and 3fh
-			out (099h),a
-			ex (sp),hl
-			ex (sp),hl
-			in a,(098h)
-			pop bc
-			pop de
-			pop hl
-			ret
-; --------------------- end | procedure to read byte in vram		
+; --------------------- begin | procedure to read byte in vram
+rvbyte:     di
+            push hl
+            push de
+            push bc
+            ld a,l
+            out (099h),a
+            ld a,h
+            and 3fh
+            out (099h),a
+            ex (sp),hl
+            ex (sp),hl
+            in a,(098h)
+            pop bc
+            pop de
+            pop hl
+            ret
+; --------------------- end | procedure to read byte in vram
 
 ; --------------------- begin | procedure to print hex byte
-printbyte:	push af
-			push hl
-			push de
-			push bc
-			push hl
-			ld b,a
-			and 0f0h
-			rrca
-			rrca
-			rrca
-			rrca
-			ld hl,hexnumbers
-			ld de,0
-			ld e,a
-			add hl,de
-			ld a,(hl)
-			pop hl
-			call wvbyte
-			inc hl
-			push hl
-			ld a,b
-			and 0fh
-			ld hl,hexnumbers
-			ld de,0
-			ld e,a
-			add hl,de
-			ld a,(hl)
-			pop hl
-			call wvbyte
-			pop bc
-			pop de
-			pop hl
-			pop af
-			ret
+printbyte:  push af
+            push hl
+            push de
+            push bc
+            push hl
+            ld b,a
+            and 0f0h
+            rrca
+            rrca
+            rrca
+            rrca
+            ld hl,hexnumbers
+            ld de,0
+            ld e,a
+            add hl,de
+            ld a,(hl)
+            pop hl
+            call wvbyte
+            inc hl
+            push hl
+            ld a,b
+            and 0fh
+            ld hl,hexnumbers
+            ld de,0
+            ld e,a
+            add hl,de
+            ld a,(hl)
+            pop hl
+            call wvbyte
+            pop bc
+            pop de
+            pop hl
+            pop af
+            ret
 ; --------------------- end | procedure to print hex byte
 
 ; --------------------- begin | procedure to multiply numbers (BC*DE=HL)
-multi:		ld a,b
-			ld b,16
-m16loop:	add hl,hl
-			sla c
-			rla
-			jr nc,m16no
-			add hl,de
-m16no:		djnz m16loop
-			ret
-; --------------------- end | procedure to multiply numbers	
+multi:      ld a,b
+            ld b,16
+m16loop:    add hl,hl
+            sla c
+            rla
+            jr nc,m16no
+            add hl,de
+m16no:      djnz m16loop
+            ret
+; --------------------- end | procedure to multiply numbers
 
-; --------------------- begin | procedure to print Loading	
+; --------------------- begin | procedure to print Loading
 printerror:  ld de,txterror
             ld hl,923
             call printh
@@ -1274,72 +1305,72 @@ clearload:  ld hl,921
             ld a,32
             call r_filvrm
             ret
-; --------------------- end | procedure to print Loading	
+; --------------------- end | procedure to print Loading
 
-; --------------------- begin | procedure to print path		
-printpath:	ld a,(de)
-			cp '*'
-			ret z
+; --------------------- begin | procedure to print path
+printpath:  ld a,(de)
+            cp '*'
+            ret z
             and a
             ret z
-			call wvbyte
+            call wvbyte
 prtpapul:   inc hl
-			inc de
-			jr printpath
-; --------------------- end | procedure to print path	
+            inc de
+            jr printpath
+; --------------------- end | procedure to print path
 
 ; --------------------- begin | procedures to save screen information in vram
-stela:		ld hl,0
-			ld de,1000h
-			ld bc,3c0h
-			jp rotvram
+stela:      ld hl,0
+            ld de,1000h
+            ld bc,3c0h
+            jp rotvram
 
-rtela:		ld hl,1000h
-			ld de,0
-			ld bc,3c0h
-			jp rotvram	
-			
-stela2:		ld hl,0
-			ld de,1400h
-			ld bc,3c0h
-			jp rotvram
+rtela:      ld hl,1000h
+            ld de,0
+            ld bc,3c0h
+            jp rotvram
+            
+stela2:     ld hl,0
+            ld de,1400h
+            ld bc,3c0h
+            jp rotvram
 
-rtela2:		ld hl,1400h
-			ld de,0
-			ld bc,3c0h
-			jp rotvram
-	
-rotvram:	push hl
-			push bc
-			push de
-			call rvbyte
-			pop hl
-			push hl
-			call wvbyte
-			pop de
-			pop bc
-			pop hl
-			inc hl
-			inc de
-			dec bc
-			ld a,c
-			or b
-			jr nz,rotvram
-			ret
+rtela2:     ld hl,1400h
+            ld de,0
+            ld bc,3c0h
+            jp rotvram
+
+rotvram:    push hl
+            push bc
+            push de
+            call rvbyte
+            pop hl
+            push hl
+            call wvbyte
+            pop de
+            pop bc
+            pop hl
+            inc hl
+            inc de
+            dec bc
+            ld a,c
+            or b
+            jr nz,rotvram
+            ret
 ; --------------------- end | procedure to save screen information in vram 
 
 ; --------------------- begin | Bios Routines
-r_filvrm:	push de
-			ld d,a
-r_filvrm2:	ld a,d
-			call wvbyte
-			inc hl
-			dec bc
-			ld a,c
-			or b
-			jr nz,r_filvrm2
-			pop de
-			ret
+r_filvrm:   push de
+            ld d,a
+r_filvrm2:  ld a,d
+            call wvbyte
+            inc hl
+            dec bc
+            ld a,c
+            or b
+            jr nz,r_filvrm2
+            pop de
+            ret
 ; --------------------- end | Bios Routines
 
 screen:     db $18,$41,$3A,$5C,$17,$17,$17,$17,$17
@@ -1416,11 +1447,11 @@ totfiltmp:          dw 0
 totpages:           db 0
 actualpage:         db 0
 dosversion:         db 0
-dirtype:			db 0
+dirtype:            db 0
 phelph:             dw 0
 txtloading:         db '[LOADING... WAIT PLEASE!]',0
 txterror:           db '[DRIVE NOT READY! PRESS ANY KEY!]',0
-hexnumbers:			db '0123456789ABCDEF'
+hexnumbers:            db '0123456789ABCDEF'
 bytes123fil:        db 1,2,3,4,5,6,7,8,9,10,11,12
 pbarhl:             dw 0
 bufstrcnt:          db 0
@@ -1438,7 +1469,7 @@ fileext1:           db 'DSK'
 fileext2:           db 'PDI'
 dirstr:             db 'DIR'
 dirbackstr:         db '..       DIR',0
-setpathstr:			db 'SET PATH CMD',0
+setpathstr:            db 'SET PATH CMD',0
 drivestr:           db 'A:       DRV',0 
 drivecnt:           db 0
 dftdrive:           db 0
