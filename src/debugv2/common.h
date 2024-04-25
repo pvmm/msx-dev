@@ -17,13 +17,6 @@
 
 #ifdef USE_DEBUG_MODE
 
-#define DEBUG_HEX          0
-#define DEBUG_INT          1
-#define DEBUG_BIN          2
-#define DEBUG_CHAR         3
-#define DEBUG_PRINTF       4
-#define DEBUG_INVALID      5
-
 /**
  * [Optional] Change emulator's debug mode. This allows programs to output text
  * and values to the emulator for debugging purposes. The format of the output
@@ -35,7 +28,6 @@
  * | DEBUG_INT             |   1   |
  * | DEBUG_BIN             |   2   |
  * | DEBUG_CHAR            |   3   |
- * | DEBUG_PRINTF          |   4   |
  *
  * See [debug()](#debug) for more details about the output.
  *
@@ -55,19 +47,13 @@ void debug_mode(uint8_t mode);
  * * You can undefine `USE_DEBUG_MODE` macro to transform all the debug macros
  * into empty macros, so no additional code is generated on the release version.
  */
-void debug_msg(char* msg);
-
-
-/**
- * [Optional] Send message to emulator for debugging (printing) along with a
- * numeric value. See [debug_mode()](#debug_mode) for output options.
- *
- * 📌 **Implementation details**
- *
- * * You can undefine `USE_DEBUG_MODE` macro to transform all the debug macros
- * into empty macros, so no additional code is generated on the release version.
- */
-void debug(char* msg, int value);
+#define debug_msg(msg) \
+	do { \
+		struct debug_printf_data MESSAGE = { \
+			"%s\n", { msg } \
+		}; \
+		_debug_printf(&MESSAGE); \
+	} while (0)
 
 
 /**
@@ -79,6 +65,26 @@ void debug(char* msg, int value);
  * into empty macros, so no additional code is generated on the release version.
  */
 void debug_break();
+
+
+/**
+ * [Optional] Send message to emulator for debugging (printing) along with a
+ * numeric value. See [debug_mode()](#debug_mode) for output options.
+ *
+ * 📌 **Implementation details**
+ *
+ * * You can undefine `USE_DEBUG_MODE` macro to transform all the debug macros
+ * into empty macros, so no additional code is generated on the release version.
+ */
+#define debug(msg, num) \
+	do { \
+		int num_ = num; \
+		struct debug_printf_data MESSAGE = { \
+			"%s%?\n", { msg, &num_ } \
+		}; \
+		_debug_printf(&MESSAGE); \
+	} while (0)
+
 
 #ifndef DISABLE_DEBUG_PRINTF
 /**
@@ -123,18 +129,18 @@ void debug_break();
  * | 32-bit octal                               |                    "%lo" | missing  |
  * | Void pointer (platform specific)           |                     "%p" | missing  |
  */
-struct debug_printf_data
-{
-	char* fmt;
-	void* const args[]; // fill this once at compile time
+struct debug_printf_data {
+	const char* fmt;
+	const void* args[]; // fill this once at compile time
 };
 
 void _debug_printf(struct debug_printf_data* data);
 
 #define debug_printf(fmt, ...) \
 	do { \
-		static struct debug_printf_data const MESSAGE = { \
-			fmt, { __VA_ARGS__ } \
+		char fmt_[] = fmt; \
+		struct debug_printf_data MESSAGE = { \
+			fmt_, { __VA_ARGS__ } \
 		}; \
 		_debug_printf(&MESSAGE); \
 	} while (0)
@@ -163,25 +169,24 @@ void _debug_printf(struct debug_printf_data* data);
 #ifndef NO_STRINGIFICATION
 # ifndef NO_VARIADIC
 #  define assert(ok, ...) \
-    do { if (!(ok)) { debug_msg("Assertion `" #ok "' failed. " __VA_ARGS__ "\nPaused\n"); debug_break(); } } while(0)
+    do { if (!(ok)) { debug_printf("Assertion `" #ok "' failed. " __VA_ARGS__ "\nPaused\n", NULL); debug_break(); } } while(0)
 # else /* NO_VARIADIC */
 #  define assert(ok) \
-    do { if (!(ok)) { debug_msg("Assertion `" #ok "' failed.\nPaused\n"); debug_break(); } } while(0)
+    do { if (!(ok)) { debug_printf("Assertion `" #ok "' failed.\nPaused\n", NULL); debug_break(); } } while(0)
 # endif /* NO_VARIADIC */
 #else /* NO_STRINGIFICATION */
 # ifndef NO_VARIADIC
 #  define assert(ok, ...) \
-    do { if (!(ok)) { debug_msg("Assertion failed. " __VA_ARGS__ "\nPaused\n"); debug_break(); } } while(0)
+    do { if (!(ok)) { debug_printf("Assertion failed. " __VA_ARGS__ "\nPaused\n", NULL); debug_break(); } } while(0)
 # else /* NO_VARIADIC */
 #  define assert(ok) \
-    do { if (!(ok)) { debug_msg("Assertion failed.\nPaused\n"); debug_break(); } } while(0)
+    do { if (!(ok)) { debug_printf("Assertion failed.\nPaused\n", NULL); debug_break(); } } while(0)
 # endif /* NO_VARIADIC */
 #endif /* NO_STRINGIFICATION */
 
 #else
 
 /* empty macros */
-#define debug_mode(x)
 #define debug(x, y)
 #define debug_msg(x)
 #define debug_break()

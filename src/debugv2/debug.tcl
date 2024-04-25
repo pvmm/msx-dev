@@ -1,13 +1,12 @@
-set debug_mode 1
-set npos 0
-set int 0
-set addr 0
-set ppos 0
+set debug_mode 0 ;# debugdevice printing mode
+set pos        0
+set addr       0
+set ppos       0
 
 proc pause_on {} {
     #ext debugdevice
     set use_pause true
-    debug set_watchpoint write_io {0x2e} {} {process_input $::wp_last_value}
+    debug set_watchpoint write_io {0x2e} {} {process_ctrl $::wp_last_value}
 }
 
 proc pause_off {} {
@@ -16,21 +15,17 @@ proc pause_off {} {
     debug set_watchpoint write_io {0x2e} {} {}
 }
 
-proc process_input {{value 0}} {
+proc process_ctrl {{value 0}} {
     global use_pause
     global debug_mode
     switch $value {
-        0xff    { if {$use_pause > 0} { debug break }} 
+        255 {
+            if {$use_pause > 0} {
+                debug break
+            }
+        }
         default { set debug_mode $value }
     }
-}
-
-proc string_size {addr} {
-    set start_addr $addr
-    for {set byte [peek $addr]} {$byte > 0} {set byte [peek $addr]} {
-        incr addr;
-    }
-    return [expr $addr - $start_addr];
 }
 
 proc addr2string {addr} {
@@ -41,10 +36,10 @@ proc addr2string {addr} {
     return $str
 }
 
-;# formatting commands
+# formatting commands
 proc printf__c   {mod addr} { puts -nonewline stderr [format "%${mod}c"  [peek [peek16 $addr]]] }
-proc printf__s   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [addr2string [peek16 [peek16 $addr]]]] }
-proc printf__S   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [string toupper  [addr2string [peek16 [peek16 $addr]]]]] }
+proc printf__s   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [addr2string [peek16 $addr]]] }
+proc printf__S   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [string toupper  [addr2string [peek16 $addr]]]] }
 proc printf__hhi {mod addr} { puts -nonewline stderr [format "%${mod}hi" [peek8  [peek16 $addr]]] }
 proc printf__hi  {mod addr} { puts -nonewline stderr [format "%${mod}hi" [peek16 [peek16 $addr]]] }
 proc printf__i   {mod addr} { printf__hi $mod $addr }
@@ -63,24 +58,43 @@ proc printf__o   {mod addr} { printf__ho $mod $addr }
 proc printf__hhb {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek8  [peek16 $addr]]] }
 proc printf__hb  {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek16 [peek16 $addr]]] }
 proc printf__b   {mod addr} { printf__hb $mod $addr }
-proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float [peek16 $addr]]] }
-#proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float  [peek16 $addr]]] }
+proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 3 [peek16 $addr]]] }
+proc printf__lf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 7 [peek16 $addr]]] }
+proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float  [peek16 $addr]]] }
 #proc printf__hhf {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_fp_float    [peek16 $addr]]] }
+proc printf__?       {addr} { puts -nonewline stderr [format "%s"        [print_debug_mode    [peek16 [peek16 $addr]]]] }
 proc printf__z   {mod addr} { puts stderr "mod=$mod" } ;# debug
 
-;# parse BASIC float
-proc parse_basic_float {addr} {
+# MSX-BASIC single is 1-bit signal + 7-bit exponent + (3|7) bytes packed BCD (n*2 digits)
+proc parse_basic_float {size addr} {
     set buf "0."
     set tmp [peek8 $addr]
     set signal [expr $tmp & 0x80 ? {"-"} : {"+"}]
     set exponent [expr ($tmp & 0x7f) - 0x40]
-    set mantissa [debug read_block memory [expr $addr + 1] 3] ;# read_block returns a string
-    for {set b 0} {$b < 3} {incr b} {
+    set mantissa [debug read_block memory [expr $addr + 1] $size] ;# read_block returns a string
+    for {set b 0} {$b < $size} {incr b} {
         set i [scan [string index $mantissa $b] %c]
         append buf [format %x $i]
     }
     append buf "e$signal$exponent"
     return $buf
+}
+
+# format is unknown (even searching in the manual)
+proc parse_sdcc_float {val} {
+    append buf "??.??"
+}
+
+# compatibility with old debugging code
+proc print_debug_mode {value} {
+    global debug_mode
+    switch $debug_mode {
+        0 { return [format %x $value] }
+        1 { return [format %i $value] }
+        2 { return [format %b $value] }
+        3 { return [format %c [expr $value & 0xff]] }
+        default { return "" }
+    }
 }
 
 # empty lots of variables at once
@@ -103,7 +117,7 @@ proc printf {addr} {
     set raw   ""
 
     for {set byte [peek $ending_addr]} {$byte > 0} {incr ending_addr; set byte [peek $ending_addr]} {
-        set c [format "%c" $byte]
+        set c [format %c $byte]
         switch $c {
             "%" { if {$ppos eq 1} { set ppos 0; append raw $c } else { incr ppos } }
             "c" { if {$ppos > 0}  { set ppos 0; set cmd "printf__c        {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr arg_addr 2 } else { append raw $c } }
@@ -117,7 +131,9 @@ proc printf {addr} {
             "o" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}o {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr arg_addr 2 } else { append raw $c } }
             "b" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}b {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr arg_addr 2 } else { append raw $c } }
             "f" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}f {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr arg_addr 2 } else { append raw $c } }
+            "?" { if {$ppos > 0}  { set ppos 0; set cmd "printf__? $arg_addr"; empty-> neg lpad tdot rpad cats; incr arg_addr 2 } else { append raw $c } }
             "h" { if {$ppos > 0}  { append cats $c; incr ppos } else { append raw $c } }
+            "l" { if {$ppos > 0}  { append cats $c; incr ppos } else { append raw $c } }
             default {
                 if {$ppos > 0} {
                     if {$c eq "-"} {
@@ -146,69 +162,26 @@ proc printf {addr} {
     }
 }
 
-proc print_input {{value 0}} {
-    global debug_mode
-    global npos
-    global int
+proc debug_printf {value} {
+    global pos
     global addr
 
-    switch $debug_mode {
-        0 {
-            if {$npos == 1} {
-                set int [expr {($value << 8) + $int}]
-                set int 0
-                incr npos -1
-            } else {
-                set int $value
-                incr npos
-            }
-        }
-        1 {
-            if {$npos == 1} {
-                set int [expr {($value << 8) + $int}]
-                if {$int > 32767} {
-                    set int [expr {$int - 65536}]
-                }
-                set int 0
-                incr npos -1
-            } else {
-                set int $value
-                incr npos
-            }
-        }
-        2 {
-            if {$npos == 1} {
-                set int [expr {($value << 8) + $int}]
-                set int 0
-                incr npos -1
-            } else {
-                set int $value
-                incr npos
-            }
-        }
-        3 { puts -nonewline stderr [format "%c" $value] }
-        4 {
-            if {$npos == 1} {
-                set addr [expr {($value << 8) + $addr}]
-                printf $addr
-                set addr 0
-                incr npos -1
-            } else {
-                set addr $value
-                incr npos
-            }
-        }
-        default {
-            puts stderr "? Unknown debug_mode $debug_mode"
-        }
+    if {$pos == 1} {
+        set addr [expr ($value << 8) + $addr]
+        printf $addr
+        set addr 0
+        incr pos -1
+    } else {
+        set addr $value
+        incr pos
     }
 }
 
 if { [info exists ::env(DEBUG)] && $::env(DEBUG) > 0 } {
     set use_pause $::env(DEBUG)
     #ext debugdevice
-    debug set_watchpoint write_io {0x2e} {} {process_input $::wp_last_value}
-    debug set_watchpoint write_io {0x2f} {} {print_input $::wp_last_value}
+    debug set_watchpoint write_io {0x2e} {} {process_ctrl $::wp_last_value}
+    debug set_watchpoint write_io {0x2f} {} {debug_printf $::wp_last_value}
 }
 
 ext debugdevice
