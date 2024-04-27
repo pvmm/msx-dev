@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #define NULL ((char *)0)
 
@@ -47,13 +48,7 @@ void debug_mode(uint8_t mode);
  * * You can undefine `USE_DEBUG_MODE` macro to transform all the debug macros
  * into empty macros, so no additional code is generated on the release version.
  */
-#define debug_msg(msg) \
-	do { \
-		struct debug_printf_data MESSAGE = { \
-			"%s\n", { msg } \
-		}; \
-		_debug_printf(&MESSAGE); \
-	} while (0)
+#define debug_msg(msg)  debug_printf("%s\n", msg)
 
 
 /**
@@ -76,14 +71,7 @@ void debug_break();
  * * You can undefine `USE_DEBUG_MODE` macro to transform all the debug macros
  * into empty macros, so no additional code is generated on the release version.
  */
-#define debug(msg, num) \
-	do { \
-		int num_ = num; \
-		struct debug_printf_data MESSAGE = { \
-			"%s%?\n", { msg, &num_ } \
-		}; \
-		_debug_printf(&MESSAGE); \
-	} while (0)
+#define debug(msg, num)  debug_printf("%s%?\n", msg, num)
 
 
 #ifndef DISABLE_DEBUG_PRINTF
@@ -129,21 +117,7 @@ void debug_break();
  * | 32-bit octal                               |                    "%lo" | missing  |
  * | Void pointer (platform specific)           |                     "%p" | missing  |
  */
-struct debug_printf_data {
-	const char* fmt;
-	const void* args[]; // fill this once at compile time
-};
-
-void _debug_printf(struct debug_printf_data* data);
-
-#define debug_printf(fmt, ...) \
-	do { \
-		char fmt_[] = fmt; \
-		struct debug_printf_data MESSAGE = { \
-			fmt_, { __VA_ARGS__ } \
-		}; \
-		_debug_printf(&MESSAGE); \
-	} while (0)
+void debug_printf(char *fmt, ...);
 
 #endif // DISABLE_DEBUG_PRINTF
 
@@ -192,7 +166,7 @@ void _debug_printf(struct debug_printf_data* data);
 #define debug_break()
 
 #ifdef DISABLE_DEBUG_PRINTF
-# define debug_printf(printf)
+# define debug_printf(fmt, args)
 #endif /* DISABLE_DEBUG_PRINTF */
 
 # ifndef NO_VARIADIC

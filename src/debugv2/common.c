@@ -19,12 +19,23 @@ void _out2e(uint8_t value) __z88dk_fastcall
 
 
 // send value to debug device (data)
-void _out2f(uint8_t value) __z88dk_fastcall
+void _out2f(uint8_t value)
 {
     UNUSED(value);
     __asm
-        ld a, l
         out (#0x2f), a
+    __endasm;
+}
+
+
+// send int to debug device (data)
+void _out2f_16(uint16_t value)
+{
+    UNUSED(value);
+    __asm
+        ld c, #0x2f
+        out (c), l
+        out (c), h
     __endasm;
 }
 
@@ -46,14 +57,12 @@ void debug_break()
 
 
 // send printf like structure to tcl script
-inline void _debug_printf(struct debug_printf_data* data)
+void debug_printf(const char* fmt, ...)
 {
-    UNUSED(data);
-    __asm
-        ld c, #0x2f
-        out (c), l
-        out (c), h
-    __endasm;
+    va_list ap;
+    va_start(ap, fmt);
+    _out2f_16((int) ap - sizeof(fmt));
+    debug_break();
 }
 
 #else
