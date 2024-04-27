@@ -14,7 +14,7 @@ int main()
     debug_mode(1);
     debug_msg("Begin testing...");
     debug_msg(msg2);
-    const char arg4[] = {192, 18, 52, 86}; // 0.123456e-0
+    const char arg4[] = {64, 18, 52, 86}; // 0.123456e+0
     float arg5 = 123.0;
     char H = 'H';
     char arg1[] = "Pedro de Medeiros";

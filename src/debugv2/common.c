@@ -62,7 +62,6 @@ void debug_printf(const char* fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     _out2f_16((int) ap - sizeof(fmt));
-    debug_break();
 }
 
 #else
