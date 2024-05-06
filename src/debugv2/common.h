@@ -21,7 +21,9 @@
 /**
  * [Optional] Change emulator's debug mode. This allows programs to output text
  * and values to the emulator for debugging purposes. The format of the output
- * value is defined below.
+ * value is defined below. This is the old behavior which is present only for
+ * compatibility with old code, the new debug_printf function is much more
+ * flexible and its use is recommended.
  *
  * | Name                  | Value |
  * | ---                   | ----- |
@@ -41,7 +43,9 @@ void debug_mode(uint8_t mode);
 
 
 /**
- * [Optional] Send text message to emulator for debugging (printing).
+ * [Optional] Send text message to emulator for debugging (printing).  This is
+ * the old behavior which is present only for compatibility with old code, the
+ * new debug_printf function is much more flexible and its use is recommended.
  *
  * 📌 **Implementation details**
  *
@@ -64,7 +68,9 @@ void debug_break();
 
 /**
  * [Optional] Send message to emulator for debugging (printing) along with a
- * numeric value. See [debug_mode()](#debug_mode) for output options.
+ * numeric value. See [debug_mode()](#debug_mode) for output options. This is
+ * the old behavior which is present only for compatibility with old code, the
+ * new debug_printf function is much more flexible and its use is recommended.
  *
  * 📌 **Implementation details**
  *
