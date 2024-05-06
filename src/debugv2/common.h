@@ -122,6 +122,7 @@ void debug_break();
  * | 32-bit binary                              |                    "%lb" | missing  |
  * | 32-bit octal                               |                    "%lo" | missing  |
  * | Void pointer (platform specific)           |                     "%p" | missing  |
+ * | Debug_mode output (for compatibility)      |                     "%?" |          |
  */
 void debug_printf(char *fmt, ...);
 
