@@ -36,34 +36,47 @@ proc addr2string {addr} {
     return $str
 }
 
+proc peek32 {addr {m memory}} {
+    expr {[peek16 $addr] + 65536 * [peek16 [expr {$addr + 2}] $m]}
+}
+
 # formatting commands
-proc printf__c   {mod addr} { puts -nonewline stderr [format "%${mod}c"  [expr $addr & 0xff]] }
-proc printf__s   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [addr2string  $addr]] }
-proc printf__S   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [string toupper  [addr2string $addr]]] }
-proc printf__hhi {mod  val} { puts -nonewline stderr [format "%${mod}hi" [expr $val & 0xff]] }
-proc printf__hi  {mod  val} { puts -nonewline stderr [format "%${mod}hi" $val] }
-proc printf__i   {mod  val} { printf__hi $mod $val }
-proc printf__hhu {mod  val} { puts -nonewline stderr [format "%${mod}hu" $val] }
-proc printf__hu  {mod  val} { puts -nonewline stderr [format "%${mod}hu" $val] }
-proc printf__u   {mod  val} { printf__hu $mod $val }
-proc printf__hhx {mod  val} { puts -nonewline stderr [format "%${mod}hx" [expr $val & 0xff]] }
-proc printf__hx  {mod  val} { puts -nonewline stderr [format "%${mod}hx" $val] }
-proc printf__x   {mod  val} { printf__hx $mod $val }
-proc printf__hhX {mod  val} { puts -nonewline stderr [format "%${mod}hX" [expr $val & 0xff]] }
-proc printf__hX  {mod  val} { puts -nonewline stderr [format "%${mod}hX" $val] }
-proc printf__X   {mod  val} { printf__hX $mod $val }
-proc printf__hho {mod  val} { puts -nonewline stderr [format "%${mod}ho" [expr $val & 0xff]] }
-proc printf__ho  {mod  val} { puts -nonewline stderr [format "%${mod}ho" $val] }
-proc printf__o   {mod  val} { printf__ho $mod $val }
-proc printf__hhb {mod  val} { puts -nonewline stderr [format "%${mod}hb" [expr $val & 0xff]] }
-proc printf__hb  {mod  val} { puts -nonewline stderr [format "%${mod}hb" $val] }
-proc printf__b   {mod  val} { printf__hb $mod $val }
-proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 3 $addr]] }
-proc printf__F   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 7 $addr]] }
-proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float    $addr]] }
-#proc printf__hhf {mod  val} { puts -nonewline stderr [format "%${mod}s"  [parse_fp_float   $val]] }
-proc printf__?        {val} { puts -nonewline stderr [format "%s"        [print_debug_mode $val]] }
-proc printf__z   {mod  val} { puts stderr "mod=$mod, val=$val" } ;# debug
+proc printf__c   {mod addr} { puts -nonewline stderr [format "%${mod}c"  [peek8  $addr]]; return 2 }
+proc printf__s   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [addr2string [peek16 $addr]]]; return 2 }
+proc printf__S   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [string toupper [addr2string [peek16 $addr]]]]; return 2 }
+proc printf__hhi {mod addr} { puts -nonewline stderr [format "%${mod}hi" [peek8  $addr]]; return 2 }
+proc printf__hi  {mod addr} { puts -nonewline stderr [format "%${mod}hi" [peek16 $addr]]; return 2 }
+proc printf__i   {mod addr} { return [printf__hi $mod $addr] }
+proc printf__hhu {mod addr} { puts -nonewline stderr [format "%${mod}hu" [peek8  $addr]]; return 2 }
+proc printf__hu  {mod addr} { puts -nonewline stderr [format "%${mod}hu" [peek16 $addr]]; return 2 }
+proc printf__u   {mod addr} { return [printf__hu $mod $addr] }
+proc printf__hhx {mod addr} { puts -nonewline stderr [format "%${mod}hx" [peek8  $addr]]; return 2 }
+proc printf__hx  {mod addr} { puts -nonewline stderr [format "%${mod}hx" [peek16 $addr]]; return 2 }
+proc printf__x   {mod addr} { return [printf__hx $mod $addr] }
+proc printf__hhX {mod addr} { puts -nonewline stderr [format "%${mod}hX" [peek8  $addr]]; return 2 }
+proc printf__hX  {mod addr} { puts -nonewline stderr [format "%${mod}hX" [peek16 $addr]]; return 2 }
+proc printf__X   {mod addr} { return [printf__hX $mod $addr] }
+proc printf__hho {mod addr} { puts -nonewline stderr [format "%${mod}ho" [peek8  $addr]]; return 2 }
+proc printf__ho  {mod addr} { puts -nonewline stderr [format "%${mod}ho" [peek16 $addr]]; return 2 }
+proc printf__o   {mod addr} { return [printf__ho $mod $addr] }
+proc printf__hhb {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek8  $addr]]; return 2 }
+proc printf__hb  {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek16 $addr]]; return 2 }
+proc printf__b   {mod addr} { return [printf__hb $mod $addr ] }
+proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 3 [peek16 $addr]]]; return 4 }
+proc printf__lf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 7 [peek16 $addr]]]; return 8 }
+proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float    [peek16 $addr]]]; return 4 }
+#proc printf__hhf {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_fp_float      [peek16 $addr]]]; return 4 }
+proc printf__li  {mod addr} { puts -nonewline stderr [format "%${mod}li" [parse_int32 [peek32 $addr]]]; return 4 }
+proc printf__lu  {mod addr} { puts -nonewline stderr [format "%${mod}lu" [peek32 $addr]]; return 4 }
+proc printf__lx  {mod addr} { puts -nonewline stderr [format "%${mod}lx" [peek32 $addr]]; return 4 }
+proc printf__lX  {mod addr} { puts -nonewline stderr [format "%${mod}lX" [peek32 $addr]]; return 4 }
+proc printf__?       {addr} { puts -nonewline stderr [format        "%s" [print_debug_mode [peek16 $addr]]]; return 2 }
+proc printf__p   {mod addr} { puts -nonewline stderr [format      "0x%X" [peek16 $addr]]; return 2 }
+proc printf__z   {mod addr} { puts stderr "mod=$mod, val=$addr"; return 2 } ;# debug
+
+proc parse_int32 {value} {
+    return [expr $value > 2147483647 ? $value - 4294967296 : $value]
+}
 
 # MSX-BASIC single is 1-bit signal + 7-bit exponent + (3|7) bytes packed BCD (n*2 digits)
 proc parse_basic_float {size addr} {
@@ -81,7 +94,7 @@ proc parse_basic_float {size addr} {
 }
 
 # format is unknown (even searching in the manual)
-proc parse_sdcc_float {val} {
+proc parse_sdcc_float {value} {
     append buf "??.??"
 }
 
@@ -107,37 +120,37 @@ proc empty-> {args} {
 proc printf {addr} {
     global ppos
 
-    ;#puts "addr=[format %i $addr]"
+    set tysz  2  ;# default type size
+    set neg  ""  ;# negative sign?
+    set lpad ""  ;# pad size in characters
+    set tdot ""  ;# truncated dot?
+    set rpad ""  ;# truncated size in characters
+    set tcs  ""  ;# type category suffix
+    set raw  ""
+
     set fmt_addr [peek16 $addr]
-    incr addr 2
-    set neg   ""  ;# negative sign?
-    set lpad  ""  ;# pad size in characters
-    set tdot  ""  ;# truncated dot?
-    set rpad  ""  ;# truncated size in characters
-    set cats  ""  ;# category suffix
-    set raw   ""
+    incr addr $tysz
 
     for {set byte [peek $fmt_addr]} {$byte > 0} {incr fmt_addr; set byte [peek $fmt_addr]} {
         set c [format %c $byte]
-	set arg_addr [peek16 $addr]
-        ;#puts "arg_addr=[format %x $arg_addr]"
         switch $c {
             "%" { if {$ppos eq 1} { set ppos 0; append raw $c } else { incr ppos } }
-            "c" { if {$ppos > 0}  { set ppos 0; set cmd "printf__c        {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "S" { if {$ppos > 0}  { set ppos 0; set cmd "printf__S        {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "s" { if {$ppos > 0}  { set ppos 0; set cmd "printf__s        {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "i" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}i {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "d" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}i {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "u" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}u {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "x" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}x {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "X" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}X {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "o" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}o {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "b" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}b {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "f" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}f {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 4 } else { append raw $c } }
-            "F" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${cats}F {$neg$lpad$tdot$rpad} $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 8 } else { append raw $c } }
-            "?" { if {$ppos > 0}  { set ppos 0; set cmd "printf__? $arg_addr"; empty-> neg lpad tdot rpad cats; incr addr 2 } else { append raw $c } }
-            "h" { if {$ppos > 0}  { append cats $c; incr ppos } else { append raw $c } }
-            "l" { if {$ppos > 0}  { append cats $c; incr ppos } else { append raw $c } }
+            "c" { if {$ppos > 0}  { set ppos 0; set cmd "printf__c       {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "S" { if {$ppos > 0}  { set ppos 0; set cmd "printf__S       {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "s" { if {$ppos > 0}  { set ppos 0; set cmd "printf__s       {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "i" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}i {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "d" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}i {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "u" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}u {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "x" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}x {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "X" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}X {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "o" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}o {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "b" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}b {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "f" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}f {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "F" { if {$ppos > 0}  { set ppos 0; set cmd "printf__${tcs}F {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "p" { if {$ppos > 0}  { set ppos 0; set cmd "printf__p       {$neg$lpad$tdot$rpad} $addr"; empty-> neg lpad tdot rpad tcs } else { append raw $c } }
+            "?" { if {$ppos > 0}  { set ppos 0; set cmd "printf__? $addr"; empty-> neg lpad tdot rpad tcs; incr addr 2 } else { append raw $c } }
+            "h" { if {$ppos > 0}  { append tcs $c; incr ppos; set tysz 2 } else { append raw $c } }
+            "l" { if {$ppos > 0}  { append tcs $c; incr ppos; set tysz 4 } else { append raw $c } }
             default {
                 if {$ppos > 0} {
                     if {$c eq "-"} {
@@ -156,9 +169,11 @@ proc printf {addr} {
         }
         if {$ppos eq 0} {
             if {[info exists cmd]} {
-                puts -nonewline stderr $raw; set raw ""
-                eval $cmd
+                puts -nonewline stderr $raw
+                set raw ""
+                incr addr [eval $cmd]
                 unset cmd
+                set tysz 2 ;# go back to default type size
             } else {
                 puts -nonewline stderr $raw; set raw ""
             }

@@ -115,12 +115,12 @@ void debug_break();
  * | 16-bit hexadecimal (A-F)                   |               "%X" "%hX" |          |
  * | 16-bit binary                              |               "%b" "%hb" |          |
  * | 16-bit octal                               |               "%o" "%ho" |          |
- * | 32-bit unsigned integer                    |                    "%lu" | missing  |
- * | 32-bit signed integer                      |              "%li" "%ld" | missing  |
- * | 32-bit hexadecimal (a-f)                   |                    "%lx" | missing  |
- * | 32-bit hexadecimal (A-F)                   |                    "%lX" | missing  |
- * | 32-bit binary                              |                    "%lb" | missing  |
- * | 32-bit octal                               |                    "%lo" | missing  |
+ * | 32-bit unsigned integer                    |                    "%lu" |          |
+ * | 32-bit signed integer                      |              "%li" "%ld" |          |
+ * | 32-bit hexadecimal (a-f)                   |                    "%lx" |          |
+ * | 32-bit hexadecimal (A-F)                   |                    "%lX" |          |
+ * | 32-bit binary                              |                    "%lb" |          |
+ * | 32-bit octal                               |                    "%lo" |          |
  * | Void pointer (platform specific)           |                     "%p" | missing  |
  * | Debug_mode output (for compatibility)      |                     "%?" |          |
  */
