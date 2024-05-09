@@ -121,7 +121,7 @@ proc printf {addr} {
     global ppos
 
     set tysz  2  ;# default type size
-    set neg  ""  ;# negative sign?
+    set neg  ""  ;# negative/positive sign?
     set lpad ""  ;# pad size in characters
     set tdot ""  ;# truncated dot?
     set rpad ""  ;# truncated size in characters
@@ -153,7 +153,7 @@ proc printf {addr} {
             "l" { if {$ppos > 0}  { append tcs $c; incr ppos; set tysz 4 } else { append raw $c } }
             default {
                 if {$ppos > 0} {
-                    if {$c eq "-"} {
+                    if {$c eq "-" || $c eq "+"} {
                         append neg $c
                     } elseif {$ppos > 0 && $c eq "."} {
                         append tdot $c
