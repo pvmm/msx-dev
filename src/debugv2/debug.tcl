@@ -95,7 +95,7 @@ proc parse_basic_float {size addr} {
 
 # format is unknown (even searching in the manual)
 proc parse_sdcc_float {value} {
-    append buf "??.??"
+    return "?.????" ;# [format %f $value]
 }
 
 # compatibility with old debugging code
