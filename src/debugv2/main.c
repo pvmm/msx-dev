@@ -29,7 +29,7 @@ int main()
     debug_printf("Now signed number -27: %hi"n, arg3);
     debug_printf("The float number 123.0 in BASIC (%f) and SDCC float format (%hf)"n, arg4, arg5);
     debug_printf("-32767 in hexadecimal: %hx\n-32767 in binary: %hb\n-32767 with "
-    	           "left padded zeros: %08u"n, arg2, arg2, arg2);
+                 "left padded zeros: %08d"n, arg2, arg2, arg2);
     debug_printf("1000 as positive integer with signal: %+i"n, arg7);
     debug_printf("The max uint32 - 1 as unsigned: %lu"n, arg6);
     debug_printf("The max uint32 - 1 as hexadecimal: %lx"n, arg6);
