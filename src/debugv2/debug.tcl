@@ -1,16 +1,14 @@
-set debug_mode 0 ;# debugdevice printing mode
+set debug_mode 0
 set pos        0
 set addr       0
 set ppos       0
 
 proc pause_on {} {
-    #ext debugdevice
     set use_pause true
     debug set_watchpoint write_io {0x2e} {} {process_ctrl $::wp_last_value}
 }
 
 proc pause_off {} {
-    #ext debugdevice
     set use_pause false
     debug set_watchpoint write_io {0x2e} {} {}
 }
@@ -198,9 +196,8 @@ proc debug_printf {value} {
 
 if { [info exists ::env(DEBUG)] && $::env(DEBUG) > 0 } {
     set use_pause $::env(DEBUG)
-    #ext debugdevice
     debug set_watchpoint write_io {0x2e} {} {process_ctrl $::wp_last_value}
     debug set_watchpoint write_io {0x2f} {} {debug_printf $::wp_last_value}
 }
 
-ext debugdevice
+#ext debugdevice
