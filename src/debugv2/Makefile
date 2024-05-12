@@ -44,7 +44,7 @@ $(BUILDDIR)/%.rel: %.c $(HEADERS) $(BUILDDIR)
 $(BUILDDIR)/%.rel: %.asm $(HEADERS) $(BUILDDIR)
 	$(Z80_AS) -g -o $@ $<
 
-$(BUILDDIR)/crt0.rel: crt0.z80
+$(BUILDDIR)/crt0.rel: ../crt0/crt0.z80
 	$(Z80_AS) -g -o $@ $<
 
 clean:
