@@ -1,11 +1,20 @@
 #include <stdint.h>
+#ifdef __SDCC
+#pragma less_pedantic
 #include "common.h"
+#endif
 
-int arg2 = 0x8001;
+#if defined(__GNUC__) || defined(__clang__)
+#define debug_printf(...) printf(__VA_ARGS__)
+#define debug_mode(x)
+#define debug_msg(x)
+#define debug(x, y)
+#include <stdio.h>
+#endif
 
 #define n "\n" // ""
-
-//#pragma less_pedantic
+	       //
+int arg2 = 0x8001;
 
 int main()
 {
@@ -15,7 +24,7 @@ int main()
     debug_msg("Begin testing...");
     debug_msg(msg2);
     const char arg4[] = {64, 18, 52, 86}; // 0.123456e+0
-    float arg5 = 123.0;
+    float arg5 = 123456.0f;
     debug("float size: ", sizeof(arg5));
     uint32_t arg6 = 4294967294;
     char H = 'H';
