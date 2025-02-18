@@ -1,5 +1,16 @@
 #include <stdint.h>
+#ifdef __SDCC
+#pragma less_pedantic
 #include "common.h"
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#define debug_printf(...) printf(__VA_ARGS__)
+#define debug_mode(x)
+#define debug_msg(x)
+#define debug(x, y)
+#include <stdio.h>
+#endif
 
 #define n "\n"
 
