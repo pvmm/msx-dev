@@ -60,10 +60,9 @@ proc printf__o   {mod addr} { return [printf__ho $mod $addr] }
 proc printf__hhb {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek8  $addr]]; return 2 }
 proc printf__hb  {mod addr} { puts -nonewline stderr [format "%${mod}hb" [peek16 $addr]]; return 2 }
 proc printf__b   {mod addr} { return [printf__hb $mod $addr ] }
-proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 3 [peek16 $addr]]]; return 4 }
-proc printf__lf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 7 [peek16 $addr]]]; return 8 }
-proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float    [peek16 $addr]]]; return 4 }
-#proc printf__hhf {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_fp_float      [peek16 $addr]]]; return 4 }
+proc printf__f   {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 3 [peek16 $addr]]]; return 2 }
+proc printf__lf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_basic_float 7 [peek16 $addr]]]; return 2 }
+proc printf__hf  {mod addr} { puts -nonewline stderr [format "%${mod}s"  [parse_sdcc_float    [peek32 $addr]]]; return 4 }
 proc printf__li  {mod addr} { puts -nonewline stderr [format "%${mod}li" [parse_int32 [peek32 $addr]]]; return 4 }
 proc printf__lu  {mod addr} { puts -nonewline stderr [format "%${mod}lu" [peek32 $addr]]; return 4 }
 proc printf__lx  {mod addr} { puts -nonewline stderr [format "%${mod}lx" [peek32 $addr]]; return 4 }
@@ -76,24 +75,31 @@ proc parse_int32 {value} {
     return [expr $value > 2147483647 ? $value - 4294967296 : $value]
 }
 
-# MSX-BASIC single is 1-bit signal + 7-bit exponent + (3|7) bytes packed BCD (n*2 digits)
-proc parse_basic_float {size addr} {
-    set buf "0."
+# MSX-BASIC single is 1-bit signal + 7-bit exponent + 3 bytes packed BCD mantissa = 4 bytes
+# MSX-BASIC double is 1-bit signal + 7-bit exponent + 7 bytes packed BCD mantissa = 8 bytes
+proc parse_basic_float {mantissa_len addr} {
     set tmp [peek8 $addr]
-    set signal [expr $tmp & 0x80 ? {"-"} : {"+"}]
+    set signal [expr $tmp & 0x80 ? {"-"} : {""}]
+    set buf "${signal}0."
     set exponent [expr ($tmp & 0x7f) - 0x40]
-    set mantissa [debug read_block memory [expr $addr + 1] $size] ;# read_block returns a string
-    for {set b 0} {$b < $size} {incr b} {
+    set mantissa [debug read_block memory [expr $addr + 1] $mantissa_len] ;# read_block returns a string
+    for {set b 0} {$b < $mantissa_len} {incr b} {
         set i [scan [string index $mantissa $b] %c]
         append buf [format %x $i]
     }
-    append buf "e$signal$exponent"
-    return $buf
+    append buf "e[expr $exponent >= 0 ? \"+\" : \"\"]$exponent"
+    expr {$buf}
+}
+
+proc retscan {args} {
+    if {[binary scan {*}$args result]} { return $result }
+    error "parse error on value [lindex $args 0]"
 }
 
 # format is unknown (even searching in the manual)
 proc parse_sdcc_float {value} {
-    return "?.????" ;# [format %f $value]
+    set intval [binary format i $value]
+    return [retscan $intval f result]
 }
 
 # compatibility with old debugging code

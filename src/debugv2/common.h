@@ -100,7 +100,7 @@ void debug_break();
  * | Right-padded nul-terminated string         |             "%-[width]s" |          |
  * | Truncate string at [width] size            |             "%.[width]s" |          |
  * | MSX-BASIC float (exponent + BCD mantissa)  |                     "%f" |          |
- * | SDCC float                                 |                    "%hf" | missing  |
+ * | SDCC float                                 |                    "%hf" |          |
  * | 16-bit fixed point                         |                   "%hhf" | missing  |
  * | 8-bit unsigned integer                     |                   "%hhu" |          |
  * | 8-bit signed integer                       |                   "%hhi" |          |
