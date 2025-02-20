@@ -100,7 +100,6 @@ proc retscan {args} {
     error "parse error on value [lindex $args 0]"
 }
 
-# format is unknown (even searching in the manual)
 proc parse_sdcc_float {value} {
     set intval [binary format i $value]
     return [retscan $intval f result]
