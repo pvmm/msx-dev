@@ -137,7 +137,7 @@ void debug_printf(char *fmt, ...);
  * into empty macros, so no additional code is generated on the release version.
  *
  * * Regular C `assert`-like macros are not appropriate for graphics mode, so
- * Mines leverages some debug functions to implements its own.
+ * we use these debug functions to implement our own.
  *
  * * This macro requires that the platform's C compiler supports stringification
  * of arguments in macros. Otherwise, the `NO_STRINGIFICATION` macro should be
