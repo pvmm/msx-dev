@@ -29,7 +29,7 @@
 # | 16-bit octal                               |               "%o" "%ho" |          |
 # | 32-bit unsigned integer                    |                    "%lu" |          |
 # | 32-bit signed integer                      |              "%li" "%ld" |          |
-# | Void pointer (platform specific)           |                     "%p" | missing  |
+# | Void pointer                               |                     "%p" |          |
 # | Debug_mode output (for compatibility)      |                     "%?" |          |
 # | ------------------------------------------ | ------------------------ | -------- |
 
@@ -104,7 +104,6 @@ proc printf__lx  {mod addr} { puts -nonewline stderr [format "%${mod}lx" [peek32
 proc printf__lX  {mod addr} { puts -nonewline stderr [format "%${mod}lX" [peek32 $addr]]; return 4 }
 proc printf__?       {addr} { puts -nonewline stderr [format        "%s" [print_debug_mode [peek16 $addr]]]; return 2 }
 proc printf__p   {mod addr} { puts -nonewline stderr [format      "0x%X" [peek16 $addr]]; return 2 }
-proc printf__z   {mod addr} { puts stderr "mod=$mod, val=$addr"; return 2 } ;# debug
 
 proc parse_int32 {value} {
     return [expr $value > 2147483647 ? $value - 4294967296 : $value]
