@@ -1,3 +1,7 @@
+# Next generation debugger with OpenMSX
+# by Pedro de Medeiros "PVMM", May 7 2024
+# https://github.com/pvmm/msx-dev/tree/main/src/debugv2
+
 set debug_mode 0
 set pos        0
 set addr       0
