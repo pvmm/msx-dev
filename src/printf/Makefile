@@ -5,7 +5,7 @@ Z80_AS := sdasz80
 HEXTOOL := hex2bin
 #HEXTOOL := ./tools/MSXhex
 
-BUILDDIR := build
+BUILDDIR := ../../build/printf
 TARGET := $(BUILDDIR)/main
 CODE := 0x4000
 DATA := 0xc000
@@ -28,7 +28,7 @@ $(TARGET).rom: $(OBJECTS) $(BUILDDIR)/crt0.rel $(BUILDDIR)
 	@cp $(TARGET).bin $(TARGET).rom
 
 $(BUILDDIR):
-	@mkdir $(BUILDDIR)
+	@mkdir -p $(BUILDDIR)
 
 openmsx: run
 
